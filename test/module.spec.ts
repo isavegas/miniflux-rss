@@ -6,14 +6,14 @@ import * as nock from "nock";
 
 // TODO: Add live server testing
 
-let mock_server = 'https://miniflux.mock';
+const mock_server = 'https://miniflux.mock';
 
 let mock = nock(mock_server);
 
-let miniflux_server = () => new Miniflux(mock_server, 'isavegas', '****');
+let miniflux_server = () => new Miniflux(mock_server, { username: 'username', password: 'password' });
 
 // Simple way to validate that our methods are sending JSON to the server.
-let json_validate = (body: string) => {
+const json_validate = (body: string) => {
     if (typeof body == 'string') {
         try {
             JSON.parse(body);

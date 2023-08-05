@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.EntryDirection = exports.EntryOrder = exports.EntryStatus = exports.Miniflux = void 0;
 const https_1 = require("https");
 const url_1 = require("url");
 let esc = str => {
@@ -9,7 +10,7 @@ let esc = str => {
         return null;
 };
 class Miniflux {
-    constructor(server_url, username, password) {
+    constructor(server_url, credentials) {
         this.get = (path) => this.request(path, null, 'GET');
         this.put = (path, data) => this.request(path, data, 'PUT');
         this.post = (path, data) => this.request(path, data, 'POST');
@@ -101,25 +102,37 @@ class Miniflux {
         this.get_user = (user) => this.get(`/v1/users/${user}`);
         this.delete_user = (user_id) => this.delete(`/v1/users/${user_id}`);
         this.url = new url_1.URL(server_url);
-        this.username = username;
-        this.authorization = `Basic ${Buffer.from(username + ':' + password).toString('base64')}`;
+        if (credentials.token != null) {
+            this.auth_method = 'token';
+            this.token = credentials.token;
+        }
+        else if (credentials.username != null && credentials.password != null) {
+            this.auth_method = 'login';
+            this.token = `Basic ${Buffer.from(credentials.username + ':' + credentials.password).toString('base64')}`;
+        }
     }
     request(path, data = null, method = 'GET') {
         if (typeof data == 'object')
             data = JSON.stringify(data);
         else if (data == null)
             data = '';
+        let headers = {
+            'Content-Type': 'application/json'
+        };
+        if (this.auth_method == 'token') {
+            headers['X-Auth-Token'] = this.token;
+        }
+        else if (this.auth_method == 'login') {
+            headers['Authorization'] = this.token;
+        }
         return new Promise((resolve, reject) => {
-            let req = https_1.request({
+            let req = (0, https_1.request)({
                 hostname: this.url.hostname,
                 port: this.url.port,
                 path: path,
                 method: method,
-                headers: {
-                    'Authorization': this.authorization,
-                    'Content-Type': 'application/json'
-                }
-            }, (response) => {
+                headers: headers,
+            }, response => {
                 let body = '';
                 response.on('data', chunk => body += chunk);
                 response.on('end', () => {
@@ -149,7 +162,7 @@ var EntryStatus;
     EntryStatus["READ"] = "read";
     EntryStatus["UNREAD"] = "unread";
     EntryStatus["REMOVED"] = "removed";
-})(EntryStatus = exports.EntryStatus || (exports.EntryStatus = {}));
+})(EntryStatus || (exports.EntryStatus = EntryStatus = {}));
 var EntryOrder;
 (function (EntryOrder) {
     EntryOrder["ID"] = "id";
@@ -157,10 +170,10 @@ var EntryOrder;
     EntryOrder["PUBLISHED_AT"] = "published_at";
     EntryOrder["CATEGORY_TITLE"] = "category_title";
     EntryOrder["CATEGORY_ID"] = "category_id";
-})(EntryOrder = exports.EntryOrder || (exports.EntryOrder = {}));
+})(EntryOrder || (exports.EntryOrder = EntryOrder = {}));
 var EntryDirection;
 (function (EntryDirection) {
     EntryDirection["ASCENDING"] = "asc";
     EntryDirection["DESCENDING"] = "desc";
-})(EntryDirection = exports.EntryDirection || (exports.EntryDirection = {}));
+})(EntryDirection || (exports.EntryDirection = EntryDirection = {}));
 //# sourceMappingURL=module.js.map

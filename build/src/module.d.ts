@@ -3,8 +3,9 @@ import { URL } from 'url';
 export declare class Miniflux {
     url: URL;
     username: string;
-    private authorization;
-    constructor(server_url: string, username: string, password: string);
+    private auth_method;
+    private token;
+    constructor(server_url: string, credentials: any);
     request(path: string, data?: any, method?: string): Promise<any>;
     get: (path: string) => Promise<any>;
     put: (path: string, data?: any) => Promise<any>;
@@ -32,7 +33,7 @@ export declare class Miniflux {
     create_user: (username: string, password: string, is_admin: boolean) => Promise<User>;
     update_user: (user_id: number, user_settings: UserSettings) => Promise<User>;
     users: () => Promise<User[]>;
-    get_user: (user: string | number) => Promise<User>;
+    get_user: (user: number | string) => Promise<User>;
     delete_user: (user_id: number) => Promise<void>;
 }
 export interface UserSettings {

@@ -1,23 +1,29 @@
 import { request, globalAgent } from 'https';
 import { ClientRequest } from 'http';
 import { URL } from 'url';
-import { settings } from 'cluster';
+import settings from 'cluster';
 
 let esc: (str: string | null) => string | null = str => {
     if (str != null)
         return str.replace('"', '\\"').replace('\'', '\\\'');
     else
-        return null
+        return null;
 }
 
 export class Miniflux {
     public url: URL;
     public username: string;
-    private authorization: string;
-    constructor(server_url: string, username: string, password: string) {
+    private auth_method: string;
+    private token: string;
+    constructor(server_url: string, credentials: any) {
         this.url = new URL(server_url);
-        this.username = username;
-        this.authorization = `Basic ${Buffer.from(username + ':' + password).toString('base64')}`;
+        if (credentials.token != null) {
+            this.auth_method = 'token';
+            this.token = credentials.token;
+        } else if (credentials.username != null && credentials.password != null) {
+            this.auth_method = 'login';
+            this.token = `Basic ${Buffer.from(credentials.username + ':' + credentials.password).toString('base64')}`;
+        }
     }
 
     request(path: string, data: any = null, method: string = 'GET'): Promise<any> {
@@ -25,17 +31,22 @@ export class Miniflux {
             data = JSON.stringify(data);
         else if (data == null)
             data = '';
+        let headers: any = {
+            'Content-Type': 'application/json'
+        }
+        if (this.auth_method == 'token') {
+            headers['X-Auth-Token'] = this.token;
+        } else if (this.auth_method == 'login') {
+            headers['Authorization'] = this.token;
+        }
         return new Promise((resolve, reject) => {
             let req = request({
                 hostname: this.url.hostname,
                 port: this.url.port,
                 path: path,
                 method: method,
-                headers: {
-                    'Authorization': this.authorization,
-                    'Content-Type': 'application/json'
-                }
-            }, (response) => {
+                headers: headers,
+            }, response => {
                 let body = '';
                 response.on('data', chunk => body += chunk);
                 response.on('end', () => {
@@ -72,7 +83,7 @@ export class Miniflux {
 
     // GET /v1/feeds/:feed_id/icon
     get_feed_icon = (feed_id: number): Promise<Icon> => this.get(`/v1/feeds/${feed_id}/icon`)
-    
+
     // POST /v1/feeds
     create_feed = (feed_url: number, category_id?: number): Promise<CreatedFeed> => {
         let feed_settings = `{"feed_url": "${feed_url}"`
@@ -81,10 +92,10 @@ export class Miniflux {
             feed_settings += category_id
         }
         feed_settings += '}'
-        
+
         return this.post(`/v1/feeds`, feed_settings);
     }
-    
+
     // PUT /v1/feeds/:feed_id
     update_feed = (feed_id: number, title?: string, category_id?: number): Promise<Feed> => {
         title = esc(title);
@@ -102,19 +113,19 @@ export class Miniflux {
 
         return this.put(`/v1/feeds/${feed_id}`, feed_settings);
     }
-    
+
     // PUT /v1/feeds/:feed_id/refresh
     refresh_feed = (feed_id: number): Promise<void> => this.put(`/v1/feeds/${feed_id}/refresh`)
-    
+
     // DELETE /v1/feeds/:feed_id
     remove_feed = (feed_id: number): Promise<void> => this.delete(`/v1/feeds/${feed_id}`)
-    
+
     // GET /v1/feeds/:feed_id/entries/:entry_id
     get_feed_entry = (feed_id: number, entry_id: number): Promise<Entry> => this.get(`/v1/feeds/${feed_id}/entries/${entry_id}`)
-    
+
     // GET /v1/entries/:entry_id
     get_entry = (entry_id: number): Promise<Entry> => this.get(`/v1/entries/${entry_id}`)
-    
+
     // GET /v1/feeds/:feed_id/entries
     // params: status, offset, limit, direction, order
     get_feed_entries = (feed_id: number, filter?: Filter): Promise<EntryList[]> => {
@@ -139,7 +150,7 @@ export class Miniflux {
         }
         return this.get(path);
     }
-    
+
     // GET /v1/entries
     // params: status, offset, limit, direction, order
     get_entries = (filter?: Filter): Promise<EntryList[]> => {
@@ -164,41 +175,41 @@ export class Miniflux {
         }
         return this.get(path);
     }
-    
+
     // PUT /v1/entries
     update_entries = (entry_ids: number[], status: EntryStatus): Promise<void> => this.put(`/v1/entries`, `{\"entry_ids\": [${entry_ids.join(',')}], \"status\": \"${esc(status)}\"}`)
-    
+
     // PUT /v1/entries/:entry_id/bookmark
     toggle_bookmark = (entry_id: number): Promise<void> => this.put(`/v1/entries/${entry_id}/bookmark`)
-    
+
     // GET /v1/categories
     categories = (): Promise<Category[]> => this.get(`/v1/categories`)
-    
+
     // POST /v1/categories
     create_category = (title: string): Promise<Category> => this.post('/v1/categories', `{\"title\": \"${esc(title)}\"}`)
-    
+
     // PUT /v1/categories/:category_id
     update_category = (category_id: number, title: string): Promise<Category> => this.put(`/v1/categories/${category_id}`, `{\"title\": \"${esc(title)}\"}`)
-    
+
     // DELETE /v1/categories/:category_id
     delete_category = (category_id: number): Promise<void> => this.delete(`/v1/categories/${category_id}`)
-    
+
     // GET /v1/export
     ompl_export = (): Promise<string> => this.get('/v1/export')
-    
+
     // POST /v1/users
     create_user = (username: string, password: string, is_admin: boolean): Promise<User> => this.post(`/v1/users`, `{\"username\":\"${esc(username)}\", \"password:\": \"${esc(password)}\", \"is_admin\": ${is_admin}}`)
-    
+
     // PUT /v1/users/:user_id
     update_user = (user_id: number, user_settings: UserSettings): Promise<User> => this.put(`/v1/users/${user_id}`, user_settings)
-    
+
     // GET /v1/users
     users = (): Promise<User[]> => this.get('/v1/users')
-    
+
     // GET /v1/users/:user
     // note that this accepts a user's ID or username
     get_user = (user: number | string): Promise<User> => this.get(`/v1/users/${user}`)
-    
+
     // DELETE /v1/users/:user_id
     delete_user = (user_id: number): Promise<void> => this.delete(`/v1/users/${user_id}`)
 }

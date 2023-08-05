@@ -4,10 +4,10 @@ const module_1 = require("../src/module");
 const chai_1 = require("chai");
 require("mocha");
 const nock = require("nock");
-let mock_server = 'https://miniflux.mock';
+const mock_server = 'https://miniflux.mock';
 let mock = nock(mock_server);
-let miniflux_server = () => new module_1.Miniflux(mock_server, 'isavegas', '****');
-let json_validate = (body) => {
+let miniflux_server = () => new module_1.Miniflux(mock_server, { username: 'username', password: 'password' });
+const json_validate = (body) => {
     if (typeof body == 'string') {
         try {
             JSON.parse(body);
@@ -24,7 +24,7 @@ describe('discover', () => {
         let expected = [{ url: 'https://medium.com/feed/@monkeytypewritr', title: 'RSS', type: 'rss' }];
         mock.filteringRequestBody(json_validate).post('/v1/discover').reply(200, expected);
         return miniflux.discover('https://medium.com/@monkeytypewritr')
-            .then(res => chai_1.expect(res).to.deep.equal(expected))
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected))
             .catch(err => new Error('Expected 200.'));
     });
     it('should handle errors', () => {
@@ -32,7 +32,7 @@ describe('discover', () => {
         mock.filteringRequestBody(json_validate).post('/v1/discover').reply(404, expected);
         return miniflux.discover('https://medium.com/abc')
             .then(res => new Error('Expected 404.'))
-            .catch(err => chai_1.expect(err).to.deep.equal(expected));
+            .catch(err => (0, chai_1.expect)(err).to.deep.equal(expected));
     });
 });
 describe('feeds', () => {
@@ -64,7 +64,7 @@ describe('feeds', () => {
             }];
         mock.get('/v1/feeds').reply(200, expected);
         return miniflux.feeds()
-            .then(res => chai_1.expect(res).to.deep.equal(expected))
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected))
             .catch(err => new Error('Expected 200.'));
     });
 });
@@ -98,7 +98,7 @@ describe('get_feed', () => {
         let feed_id = 1;
         mock.get(`/v1/feeds/${feed_id}`).reply(200, expected);
         return miniflux.get_feed(feed_id)
-            .then(res => chai_1.expect(res).to.deep.equal(expected))
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected))
             .catch(err => new Error('Expected 200.'));
     });
 });
@@ -113,7 +113,7 @@ describe('get_feed_icon', () => {
         let feed_id = 1;
         mock.get(`/v1/feeds/${feed_id}/icon`).reply(200, expected);
         return miniflux.get_feed_icon(feed_id)
-            .then(res => chai_1.expect(res).to.deep.equal(expected))
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected))
             .catch(err => new Error('Expected 200.'));
     });
 });
@@ -126,7 +126,7 @@ describe('create_feed', () => {
         let feed_id = 1;
         mock.filteringRequestBody(json_validate).post(`/v1/feeds`).reply(200, expected);
         return miniflux.create_feed(feed_id, 1)
-            .then(res => chai_1.expect(res).to.deep.equal(expected))
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected))
             .catch(err => new Error('Expected 200.'));
     });
     it('shouldn\'t require a category', () => {
@@ -136,7 +136,7 @@ describe('create_feed', () => {
         let feed_id = 1;
         mock.filteringRequestBody(json_validate).post(`/v1/feeds`).reply(200, expected);
         return miniflux.create_feed(feed_id)
-            .then(res => chai_1.expect(res).to.deep.equal(expected))
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected))
             .catch(err => new Error('Expected 200.'));
     });
 });
@@ -171,7 +171,7 @@ describe('update_feed', () => {
         let feed_id = 1;
         mock.filteringRequestBody(json_validate).put(`/v1/feeds/${feed_id}`).reply(200, expected);
         return miniflux.update_feed(feed_id, 'Example Feed', 1)
-            .then(res => chai_1.expect(res).to.deep.equal(expected))
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected))
             .catch(err => new Error('Expected 200.'));
     });
     it('should accept only a new title', () => {
@@ -180,7 +180,7 @@ describe('update_feed', () => {
         mock.filteringRequestBody(json_validate).put(`/v1/feeds/${feed_id}`).reply(200, expected);
         return miniflux.update_feed(feed_id, 'New Title', null)
             .then(res => new Error('Expected error'))
-            .catch(err => chai_1.expect(err).to.equal('No title or category specified'));
+            .catch(err => (0, chai_1.expect)(err).to.equal('No title or category specified'));
     });
     it('should accept only a new category', () => {
         let expected = dummy_feed;
@@ -188,13 +188,13 @@ describe('update_feed', () => {
         mock.filteringRequestBody(json_validate).put(`/v1/feeds/${feed_id}`).reply(200, expected);
         return miniflux.update_feed(feed_id, null, 10)
             .then(res => new Error('Expected error'))
-            .catch(err => chai_1.expect(err).to.equal('No title or category specified'));
+            .catch(err => (0, chai_1.expect)(err).to.equal('No title or category specified'));
     });
     it('should require title or category', () => {
         let feed_id = 1;
         return miniflux.update_feed(feed_id, null, null)
             .then(res => new Error('Expected error'))
-            .catch(err => chai_1.expect(err).to.equal('No title or category specified'));
+            .catch(err => (0, chai_1.expect)(err).to.equal('No title or category specified'));
     });
 });
 describe('refresh_feed', () => {
@@ -203,7 +203,7 @@ describe('refresh_feed', () => {
         let feed_id = 1;
         mock.filteringRequestBody(json_validate).put(`/v1/feeds/${feed_id}/refresh`).reply(204);
         return miniflux.refresh_feed(feed_id)
-            .then(res => chai_1.expect(res).to.equal(null));
+            .then(res => (0, chai_1.expect)(res).to.equal(null));
     });
 });
 let dummy_entry = {
@@ -252,7 +252,7 @@ describe('get_feed_entry', () => {
         let entry_id = 1;
         mock.get(`/v1/feeds/${feed_id}/entries/${entry_id}`).reply(200, expected);
         return miniflux.get_feed_entry(feed_id, entry_id)
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('get_entry', () => {
@@ -262,7 +262,7 @@ describe('get_entry', () => {
         let entry_id = 1;
         mock.get(`/v1/entries/${entry_id}`).reply(200, expected);
         return miniflux.get_entry(entry_id)
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('get_feed_entries', () => {
@@ -272,7 +272,7 @@ describe('get_feed_entries', () => {
         let feed_id = 1;
         mock.get(`/v1/feeds/${feed_id}/entries`).reply(200, expected);
         return miniflux.get_feed_entries(feed_id)
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
     it('should get feed entries with limit', () => {
         let expected = [dummy_entry];
@@ -281,7 +281,7 @@ describe('get_feed_entries', () => {
             .query({ limit: 10 })
             .reply(200, expected);
         return miniflux.get_feed_entries(feed_id, { limit: 10 })
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
     it('should get feed entries with offset', () => {
         let expected = [dummy_entry];
@@ -290,7 +290,7 @@ describe('get_feed_entries', () => {
             .query({ offset: 10 })
             .reply(200, expected);
         return miniflux.get_feed_entries(feed_id, { offset: 10 })
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
     it('should get feed entries with direction', () => {
         let expected = [dummy_entry];
@@ -299,7 +299,7 @@ describe('get_feed_entries', () => {
             .query({ direction: module_1.EntryDirection.DESCENDING })
             .reply(200, expected);
         return miniflux.get_feed_entries(feed_id, { direction: module_1.EntryDirection.DESCENDING })
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
     it('should get feed entries with specified status', () => {
         let expected = [dummy_entry];
@@ -308,7 +308,7 @@ describe('get_feed_entries', () => {
             .query({ status: module_1.EntryStatus.UNREAD })
             .reply(200, expected);
         return miniflux.get_feed_entries(feed_id, { status: module_1.EntryStatus.UNREAD })
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
     it('should get feed entries with order', () => {
         let expected = [dummy_entry];
@@ -317,7 +317,7 @@ describe('get_feed_entries', () => {
             .query({ order: module_1.EntryOrder.PUBLISHED_AT })
             .reply(200, expected);
         return miniflux.get_feed_entries(feed_id, { order: module_1.EntryOrder.PUBLISHED_AT })
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
     it('should get feed entries with all filters', () => {
         let expected = [dummy_entry];
@@ -333,7 +333,7 @@ describe('get_feed_entries', () => {
             .query(filter)
             .reply(200, expected);
         return miniflux.get_feed_entries(feed_id, filter)
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('update_entries', () => {
@@ -343,7 +343,7 @@ describe('update_entries', () => {
         let status = module_1.EntryStatus.UNREAD;
         mock.filteringRequestBody(json_validate).put(`/v1/entries`).reply(204);
         return miniflux.update_entries(entry_ids, status)
-            .then(res => chai_1.expect(res).to.equal(null));
+            .then(res => (0, chai_1.expect)(res).to.equal(null));
     });
 });
 describe('toggle_bookmark', () => {
@@ -352,7 +352,7 @@ describe('toggle_bookmark', () => {
         let entry_id = 1;
         mock.filteringRequestBody(json_validate).put(`/v1/entries/${entry_id}/bookmark`).reply(204);
         return miniflux.toggle_bookmark(entry_id)
-            .then(res => chai_1.expect(res).to.equal(null));
+            .then(res => (0, chai_1.expect)(res).to.equal(null));
     });
 });
 describe('categories', () => {
@@ -365,7 +365,7 @@ describe('categories', () => {
             }];
         mock.filteringRequestBody(json_validate).get(`/v1/categories`).reply(200, expected);
         return miniflux.categories()
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('create_category', () => {
@@ -378,7 +378,7 @@ describe('create_category', () => {
         };
         mock.filteringRequestBody(json_validate).post(`/v1/categories`).reply(200, expected);
         return miniflux.create_category('Stuff')
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('update_category', () => {
@@ -392,7 +392,7 @@ describe('update_category', () => {
         let category_id = 1;
         mock.filteringRequestBody(json_validate).put(`/v1/categories/${category_id}`).reply(200, expected);
         return miniflux.update_category(category_id, 'Stuff')
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('delete_category', () => {
@@ -401,7 +401,7 @@ describe('delete_category', () => {
         let category_id = 1;
         mock.filteringRequestBody(json_validate).delete(`/v1/categories/${category_id}`).reply(204);
         return miniflux.delete_category(category_id)
-            .then(res => chai_1.expect(res).to.equal(null));
+            .then(res => (0, chai_1.expect)(res).to.equal(null));
     });
 });
 describe('opml_export', () => {
@@ -412,7 +412,7 @@ describe('opml_export', () => {
             "Content-Type": "text/xml"
         });
         return miniflux.ompl_export()
-            .then(res => chai_1.expect(res).to.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.equal(expected));
     });
 });
 describe('create_user', () => {
@@ -428,7 +428,7 @@ describe('create_user', () => {
         };
         mock.filteringRequestBody(json_validate).post(`/v1/users`).reply(200, expected);
         miniflux.create_user('username', '****', false)
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('update_user', () => {
@@ -451,7 +451,7 @@ describe('update_user', () => {
             theme: 'default',
             language: 'en_US',
             timezone: 'UTC',
-        }).then(res => chai_1.expect(res).to.deep.equal(expected));
+        }).then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('users', () => {
@@ -467,7 +467,7 @@ describe('users', () => {
             }];
         mock.filteringRequestBody(json_validate).get(`/v1/users`).reply(200, expected);
         return miniflux.users()
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('get_user', () => {
@@ -484,7 +484,7 @@ describe('get_user', () => {
         };
         mock.filteringRequestBody(json_validate).get(`/v1/users/${user_id}`).reply(200, expected);
         return miniflux.get_user(user_id)
-            .then(res => chai_1.expect(res).to.deep.equal(expected));
+            .then(res => (0, chai_1.expect)(res).to.deep.equal(expected));
     });
 });
 describe('delete_user', () => {
@@ -493,7 +493,7 @@ describe('delete_user', () => {
         let user_id = 1;
         mock.filteringRequestBody(json_validate).delete(`/v1/users/${user_id}`).reply(204);
         return miniflux.delete_user(user_id)
-            .then(res => chai_1.expect(res).to.equal(null));
+            .then(res => (0, chai_1.expect)(res).to.equal(null));
     });
 });
 //# sourceMappingURL=module.spec.js.map
